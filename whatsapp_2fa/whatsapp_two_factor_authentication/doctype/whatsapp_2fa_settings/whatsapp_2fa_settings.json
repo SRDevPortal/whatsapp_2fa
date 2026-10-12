@@ -1,0 +1,28 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-12 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": ["enabled", "provider", "channel_account", "template_name", "template_language", "otp_expiry"],
+ "fields": [
+  {"default": "0", "fieldname": "enabled", "fieldtype": "Check", "label": "Enabled"},
+  {"default": "Interakt (WA Chat Hub)", "fieldname": "provider", "fieldtype": "Select", "label": "Provider", "options": "Interakt (WA Chat Hub)", "reqd": 1},
+  {"fieldname": "channel_account", "fieldtype": "Link", "label": "Channel Account", "options": "Chat Channel Account"},
+  {"fieldname": "template_name", "fieldtype": "Data", "label": "Approved Authentication Template"},
+  {"default": "en", "fieldname": "template_language", "fieldtype": "Data", "label": "Template Language"},
+  {"default": "300", "fieldname": "otp_expiry", "fieldtype": "Int", "label": "OTP Expiry (seconds)", "reqd": 1}
+ ],
+ "index_web_pages_for_search": 0,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-10-12 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "WhatsApp Two Factor Authentication",
+ "name": "WhatsApp 2FA Settings",
+ "owner": "Administrator",
+ "permissions": [{"create": 1, "email": 1, "print": 1, "read": 1, "role": "System Manager", "share": 1, "write": 1}],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
