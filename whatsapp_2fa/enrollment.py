@@ -85,13 +85,16 @@ def send_verification(user):
     if not settings.enabled:
         frappe.throw(_("Enable WhatsApp 2FA Settings first."))
     settings.validate()
+    from whatsapp_2fa.limits import value
+    cooldown = value(settings, "resend_cooldown")
+    expiry = value(settings, "verification_expiry")
     cache = frappe.cache
     with cache.lock(cache.make_key(_key(user, "lock")), timeout=30, blocking_timeout=5):
         now = time.time()
         rate = cache.get_value(_key(user, "rate"), expires=True) or {"count": 0, "last": 0, "until": now + 3600}
-        if now - rate["last"] < 60:
-            frappe.throw(_("Wait 60 seconds before requesting another code."))
-        if rate["count"] >= 5:
+        if now - rate["last"] < cooldown:
+            frappe.throw(_("Wait {0} seconds before requesting another code.").format(cooldown))
+        if rate["count"] >= value(settings, "verification_sends_per_hour"):
             frappe.throw(_("Verification send limit reached. Try again in one hour."))
         rate["count"] += 1
         rate["last"] = now
@@ -104,9 +107,9 @@ def send_verification(user):
         if result.get("outcome") != "accepted":
             frappe.throw(_("The verification code could not be sent. Try again later."))
         challenge = {"number": number, "actor": frappe.session.user, "reference": reference,
-                     "digest": _digest(reference, code), "attempts": 0, "until": now + 300}
-        cache.set_value(_key(user, "challenge"), challenge, expires_in_sec=300)
-        return {"destination": number[:3] + "******" + number[-3:], "expires_in": 300}
+                     "digest": _digest(reference, code), "attempts": 0, "max_attempts": value(settings, "verification_attempts"), "until": now + expiry}
+        cache.set_value(_key(user, "challenge"), challenge, expires_in_sec=expiry)
+        return {"destination": number[:3] + "******" + number[-3:], "expires_in": expiry, "resend_after": cooldown}
 
 
 @frappe.whitelist(methods=["POST"])
@@ -126,11 +129,11 @@ def verify_number(user, code):
             frappe.throw(_("The number changed. Request a new verification code."))
         if not hmac.compare_digest(challenge["digest"], _digest(challenge["reference"], str(code).strip())):
             challenge["attempts"] += 1
-            if challenge["attempts"] >= 5:
+            if challenge["attempts"] >= challenge.get("max_attempts", 5):
                 cache.delete_value(_key(user, "challenge"))
             else:
                 cache.set_value(_key(user, "challenge"), challenge, expires_in_sec=max(1, int(challenge["until"] - now)))
-            frappe.throw(_("Incorrect verification code. After five attempts you must request a new code."))
+            frappe.throw(_("Incorrect verification code. After {0} attempts you must request a new code.").format(challenge.get("max_attempts", 5)))
         frappe.db.set_value("User", user, {
             "custom_whatsapp_verified_number": challenge["number"],
             "custom_whatsapp_verified_on": now_datetime(),

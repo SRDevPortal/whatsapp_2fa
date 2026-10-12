@@ -6,6 +6,8 @@ class WhatsApp2FASettings(Document):
 	def validate(self):
 		if not 60 <= int(self.otp_expiry or 0) <= 600:
 			frappe.throw("OTP Expiry must be between 60 and 600 seconds.")
+		from whatsapp_2fa.limits import validate_limits
+		validate_limits(self)
 		if self.enabled:
 			from whatsapp_2fa.providers import validate
 

@@ -40,7 +40,7 @@
                 // The native SMS branch renders a delivered-code prompt and submits
                 // otp + tmp_id. Keep the actual response and server method intact.
                 data = Object.assign({}, data, {
-                    verification: Object.assign({}, data.verification, { method: "SMS" }),
+                    verification: Object.assign({}, data.verification, { method: "SMS", prompt: data.verification.prompt + (data.expires_in ? " " + __("Code expires in {0} seconds.", [data.expires_in]) : "") }),
                 });
             }
             const result = nativeHandler.apply(this, [data, ...Array.prototype.slice.call(arguments, 1)]);
@@ -53,4 +53,5 @@
     $(document).on("login_rendered", installWhatsAppVerification);
     frappe.ready(installWhatsAppVerification);
 })();
+
 

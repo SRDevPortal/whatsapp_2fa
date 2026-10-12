@@ -43,6 +43,9 @@ def authenticate_for_2factor(user):
 	frappe.local.response["verification"] = _deliver(user, token, secret, settings, tmp_id)
 	frappe.local.response["tmp_id"] = tmp_id
 	remember_challenge(user, tmp_id, int(settings.otp_expiry or 300))
+	from whatsapp_2fa.limits import value
+	frappe.local.response["resend_after"] = value(settings, "resend_cooldown")
+	frappe.local.response["expires_in"] = int(settings.otp_expiry or 300)
 
 
 def _cache_challenge(user, token, secret, tmp_id, expiry):

@@ -17,6 +17,7 @@ doc_events = {
     "User": {"validate": "whatsapp_2fa.enrollment.validate_user"},
 }
 
-web_include_js = ["/assets/whatsapp_2fa/js/login.js?v=20261012-resend-2"]
+web_include_js = ["/assets/whatsapp_2fa/js/login.js?v=20261012-limits-1"]
 doctype_js = {"User": "public/js/user.js"}
+
 

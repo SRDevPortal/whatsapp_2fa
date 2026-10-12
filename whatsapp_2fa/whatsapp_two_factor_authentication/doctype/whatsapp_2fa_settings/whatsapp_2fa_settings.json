@@ -4,14 +4,113 @@
  "creation": "2026-10-12 00:00:00.000000",
  "doctype": "DocType",
  "engine": "InnoDB",
- "field_order": ["enabled", "provider", "channel_account", "template_name", "template_language", "otp_expiry"],
+ "field_order": [
+  "enabled",
+  "provider",
+  "channel_account",
+  "template_name",
+  "template_language",
+  "otp_expiry",
+  "resend_limits_section",
+  "login_sends_per_hour",
+  "verification_sends_per_hour",
+  "resend_cooldown",
+  "verification_expiry",
+  "verification_attempts",
+  "login_max_lifetime"
+ ],
  "fields": [
-  {"default": "0", "fieldname": "enabled", "fieldtype": "Check", "label": "Enabled"},
-  {"default": "Interakt (WA Chat Hub)", "fieldname": "provider", "fieldtype": "Select", "label": "Provider", "options": "Interakt (WA Chat Hub)", "reqd": 1},
-  {"fieldname": "channel_account", "fieldtype": "Link", "label": "Channel Account", "options": "Chat Channel Account"},
-  {"fieldname": "template_name", "fieldtype": "Data", "label": "Approved Authentication Template"},
-  {"default": "en", "fieldname": "template_language", "fieldtype": "Data", "label": "Template Language"},
-  {"default": "300", "fieldname": "otp_expiry", "fieldtype": "Int", "label": "OTP Expiry (seconds)", "reqd": 1}
+  {
+   "default": "0",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "default": "Interakt (WA Chat Hub)",
+   "fieldname": "provider",
+   "fieldtype": "Select",
+   "label": "Provider",
+   "options": "Interakt (WA Chat Hub)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "channel_account",
+   "fieldtype": "Link",
+   "label": "Channel Account",
+   "options": "Chat Channel Account"
+  },
+  {
+   "fieldname": "template_name",
+   "fieldtype": "Data",
+   "label": "Approved Authentication Template"
+  },
+  {
+   "default": "en",
+   "fieldname": "template_language",
+   "fieldtype": "Data",
+   "label": "Template Language"
+  },
+  {
+   "default": "300",
+   "fieldname": "otp_expiry",
+   "fieldtype": "Int",
+   "label": "OTP Expiry (seconds)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "resend_limits_section",
+   "fieldtype": "Section Break",
+   "label": "Verification and Resend Limits"
+  },
+  {
+   "fieldname": "login_sends_per_hour",
+   "fieldtype": "Int",
+   "label": "Login Code Sends per Hour",
+   "default": "5",
+   "reqd": 1,
+   "description": "Per user; includes the initial send and resends."
+  },
+  {
+   "fieldname": "verification_sends_per_hour",
+   "fieldtype": "Int",
+   "label": "Number Verification Sends per Hour",
+   "default": "5",
+   "reqd": 1,
+   "description": "Per user; includes the initial send and resends."
+  },
+  {
+   "fieldname": "resend_cooldown",
+   "fieldtype": "Int",
+   "label": "Resend Cooldown (seconds)",
+   "default": "60",
+   "reqd": 1,
+   "description": null
+  },
+  {
+   "fieldname": "verification_expiry",
+   "fieldtype": "Int",
+   "label": "Number Verification Code Expiry (seconds)",
+   "default": "300",
+   "reqd": 1,
+   "description": null
+  },
+  {
+   "fieldname": "verification_attempts",
+   "fieldtype": "Int",
+   "label": "Number Verification Attempts per Code",
+   "default": "5",
+   "reqd": 1,
+   "description": null
+  },
+  {
+   "fieldname": "login_max_lifetime",
+   "fieldtype": "Int",
+   "label": "Maximum Login Challenge Lifetime (seconds)",
+   "default": "900",
+   "reqd": 1,
+   "description": null
+  }
  ],
  "index_web_pages_for_search": 0,
  "issingle": 1,
@@ -21,7 +120,17 @@
  "module": "WhatsApp Two Factor Authentication",
  "name": "WhatsApp 2FA Settings",
  "owner": "Administrator",
- "permissions": [{"create": 1, "email": 1, "print": 1, "read": 1, "role": "System Manager", "share": 1, "write": 1}],
+ "permissions": [
+  {
+   "create": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": []

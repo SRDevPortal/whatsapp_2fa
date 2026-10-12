@@ -54,6 +54,8 @@ Keep the current login method until message delivery has been verified.
 Frappe excludes the Administrator account from native two-factor challenges;
 use a regular user for the end-to-end login test.
 
+Timing and send/attempt limits described below are defaults and can be changed in WhatsApp 2FA Settings.
+
 ### Per-user number verification and activation
 
 On a saved User record, click **Verify WhatsApp Number**, enter the six-digit
@@ -86,3 +88,16 @@ Login resend requires the active password-authenticated challenge, rechecks
 user activation and the verified destination, and replaces the previous login
 code on successful delivery. Expired/completed challenges require a new login.
 Resending cannot keep a login challenge alive beyond fifteen minutes.
+
+### Configurable limits
+
+WhatsApp 2FA Settings provides Login Code Sends per Hour (default 5), Number
+Verification Sends per Hour (5), Resend Cooldown (60 seconds), Number
+Verification Code Expiry (300 seconds), Number Verification Attempts per Code
+(5), and Maximum Login Challenge Lifetime (900 seconds). Existing OTP Expiry
+continues to control login-code expiry. Send counts include initial sends and
+resends and remain separate per user for enrollment and login.
+
+New challenges snapshot their expiry, attempt limit, and maximum lifetime.
+Changing settings does not change those values on an existing challenge.
+Hourly send limits and resend cooldown use the current configuration.

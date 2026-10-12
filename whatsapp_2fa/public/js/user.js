@@ -25,7 +25,7 @@ frappe.ui.form.on("User", {
             const dialog = new frappe.ui.Dialog({
                 title: __("Verify WhatsApp Number"),
                 fields: [
-                    {fieldname: "info", fieldtype: "HTML", options: `<p>${frappe.utils.escape_html(__("Enter the code sent to {0}. It expires in 5 minutes.", [challenge.destination]))}</p>`},
+                    {fieldname: "info", fieldtype: "HTML", options: `<p>${frappe.utils.escape_html(__("Enter the code sent to {0}. It expires in {1} seconds.", [challenge.destination, challenge.expires_in]))}</p>`},
                     {fieldname: "code", fieldtype: "Data", label: __("Verification Code"), reqd: 1},
                 ],
                 primary_action_label: __("Verify"),
@@ -45,7 +45,7 @@ frappe.ui.form.on("User", {
                     }
                 },
             });
-            let resendAt = Date.now() + 60000;
+            let resendAt = Date.now() + challenge.resend_after * 1000;
             const resend = $('<button type="button" class="btn btn-default btn-sm"></button>');
             dialog.$body.append(resend);
             const updateResend = () => {
@@ -57,7 +57,8 @@ frappe.ui.form.on("User", {
                 try {
                     const sent = await frappe.call({method: "whatsapp_2fa.enrollment.send_verification", args: {user: frm.doc.name}, freeze: true});
                     if (sent.message) {
-                        resendAt = Date.now() + 60000;
+                        resendAt = Date.now() + sent.message.resend_after * 1000;
+                        dialog.fields_dict.info.$wrapper.html($(`<p></p>`).text(__("Enter the code sent to {0}. It expires in {1} seconds.", [sent.message.destination, sent.message.expires_in])));
                         dialog.set_value("code", "");
                         frappe.show_alert({message: __("New WhatsApp code sent. Use the latest code."), indicator: "green"});
                     }
@@ -70,5 +71,6 @@ frappe.ui.form.on("User", {
         });
     },
 });
+
 
 
