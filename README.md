@@ -101,3 +101,35 @@ resends and remain separate per user for enrollment and login.
 New challenges snapshot their expiry, attempt limit, and maximum lifetime.
 Changing settings does not change those values on an existing challenge.
 Hourly send limits and resend cooldown use the current configuration.
+
+### Structured authentication audit log
+
+System Managers can open **WhatsApp 2FA Log** (`/app/whatsapp-2fa-log`).
+Each send attempt has one row with ordinary fields; resends create separate
+rows linked by a non-usable SHA-256 correlation reference. The row records
+masked destination, flow/action, provider message ID, delivery and verification
+results, incorrect-attempt count, timestamps, and a safe provider error summary.
+No JSON, OTP, password, authentication secret, API key, raw webhook payload,
+full destination, or usable login challenge is stored in this DocType.
+
+Audit writes use a separate database transaction so failed HTTP/login requests
+do not roll back their audit records. They are best effort: storage failures
+produce a generic server warning and do not change authentication decisions.
+Enrollment success is recorded after its User update commits. Verification
+success means the OTP was accepted, not that every later login check passed.
+Expired pending records are marked by daily cleanup; Redis expiry alone does
+not create an immediate audit event.
+
+The optional WA Chat Hub webhook hook correlates provider IDs or opaque audit
+callbacks. New authentication delivery events are consumed before chat-message
+reconstruction. A delayed Sent event cannot overwrite Failed, Delivered, or
+Read. Provider error text is mapped to fixed safe summaries; raw text is not
+stored. Historical chat messages are not removed or backfilled.
+
+**Audit Log Retention (days)** defaults to 30 (allowed range 1-365). A daily
+scheduled job marks expired attempts and deletes old audit rows in bounded
+batches. The scheduler and worker must be running for automatic cleanup.
+
+Deploy both whatsapp_2fa and wa_chat_hub changes and run the site's migration
+before restarting services. This workspace's schema was applied locally to
+sriaas.local; this does not deploy changes to a remote site.

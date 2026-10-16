@@ -21,3 +21,7 @@ web_include_js = ["/assets/whatsapp_2fa/js/login.js?v=20261012-limits-1"]
 doctype_js = {"User": "public/js/user.js"}
 
 
+
+
+whatsapp_authentication_status = ["whatsapp_2fa.audit.delivery_status"]
+scheduler_events = {"daily": ["whatsapp_2fa.audit.cleanup"]}

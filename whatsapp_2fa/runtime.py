@@ -15,6 +15,7 @@ def install(*_ignored):
 	authenticate_for_2factor._whatsapp_2fa = True
 	frappe.auth.authenticate_for_2factor = authenticate_for_2factor
 	frappe.auth.should_run_2fa = should_run_2fa
+	frappe.auth.confirm_otp_token = confirm_otp_token
 
 
 def authenticate_for_2factor(user):
@@ -61,8 +62,8 @@ def _cache_challenge(user, token, secret, tmp_id, expiry):
 		frappe.cache.expire(f"{tmp_id}{suffix}", expiry)
 
 
-def _deliver(user, token, secret, settings, reference):
-	from whatsapp_2fa.providers import send
+def _deliver(user, token, secret, settings, reference, action="Initial Send", expiry=None):
+	from whatsapp_2fa.audit import send
 
 	from whatsapp_2fa.enrollment import is_enrolled
 	user_doc = frappe.get_doc("User", user)
@@ -70,7 +71,7 @@ def _deliver(user, token, secret, settings, reference):
 		frappe.throw("Verify and enable this user's WhatsApp number first.", frappe.AuthenticationError)
 	destination = user_doc.custom_whatsapp_verified_number
 
-	result = send(settings, destination, pyotp.HOTP(secret).at(token), reference)
+	result = send(user, "Login", action, destination, pyotp.HOTP(secret).at(token), reference, settings, expiry or int(settings.otp_expiry or 300))
 	if result.get("outcome") != "accepted":
 		frappe.throw(
 			"The WhatsApp verification code could not be sent. Try again later.",
@@ -100,3 +101,23 @@ def should_run_2fa(user):
         return False
     return is_enrolled(frappe.get_doc("User", user))
 
+
+
+def confirm_otp_token(login_manager, otp=None, tmp_id=None):
+    from frappe.twofactor import confirm_otp_token as native_confirm, ExpiredLoginException
+    from whatsapp_2fa.audit import verification
+    reference = tmp_id or frappe.form_dict.get("tmp_id")
+    attempted = otp or frappe.form_dict.get("otp")
+    try:
+        result = native_confirm(login_manager, otp=otp, tmp_id=tmp_id)
+    except ExpiredLoginException:
+        if reference and attempted:
+            verification(reference, "Expired")
+        raise
+    except frappe.AuthenticationError:
+        if reference and attempted:
+            verification(reference, "Incorrect", incorrect=True)
+        raise
+    if result and reference and attempted:
+        verification(reference, "Successful")
+    return result

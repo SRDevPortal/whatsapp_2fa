@@ -99,15 +99,18 @@ def send_verification(user):
         rate["count"] += 1
         rate["last"] = now
         cache.set_value(_key(user, "rate"), rate, expires_in_sec=max(1, int(rate["until"] - now)))
+        previous = cache.get_value(_key(user, "challenge"), expires=True)
         cache.delete_value(_key(user, "challenge"))
         code = f"{secrets.randbelow(1000000):06d}"
         reference = secrets.token_hex(24)
-        from whatsapp_2fa.providers import send
-        result = send(settings, number, code, reference)
+        from whatsapp_2fa.audit import send, correlation
+        group = previous.get("audit_group") if previous else None
+        group = group or correlation(reference)
+        result = send(user, "Number Verification", "Resend" if previous else "Initial Send", number, code, reference, settings, expiry, group=group)
         if result.get("outcome") != "accepted":
             frappe.throw(_("The verification code could not be sent. Try again later."))
         challenge = {"number": number, "actor": frappe.session.user, "reference": reference,
-                     "digest": _digest(reference, code), "attempts": 0, "max_attempts": value(settings, "verification_attempts"), "until": now + expiry}
+                     "audit_group": group, "digest": _digest(reference, code), "attempts": 0, "max_attempts": value(settings, "verification_attempts"), "until": now + expiry}
         cache.set_value(_key(user, "challenge"), challenge, expires_in_sec=expiry)
         return {"destination": number[:3] + "******" + number[-3:], "expires_in": expiry, "resend_after": cooldown}
 
@@ -115,20 +118,27 @@ def send_verification(user):
 @frappe.whitelist(methods=["POST"])
 def verify_number(user, code):
     _authorized_user(user)
+    from whatsapp_2fa.audit import verification
     cache = frappe.cache
     with cache.lock(cache.make_key(_key(user, "lock")), timeout=30, blocking_timeout=5):
         challenge = cache.get_value(_key(user, "challenge"), expires=True)
         now = time.time()
         if not challenge or challenge["until"] <= now:
+            if challenge and challenge.get("audit_group"):
+                verification(challenge["audit_group"], "Expired", hashed=True)
             frappe.throw(_("Verification expired. Request a new code."))
         if challenge["actor"] != frappe.session.user:
             frappe.throw(_("Request a verification code from your own session."), frappe.PermissionError)
         doc = _authorized_user(user, for_update=True)
         if normalize(number_for(doc)) != challenge["number"]:
+            if challenge.get("audit_group"):
+                verification(challenge["audit_group"], "Superseded", hashed=True)
             cache.delete_value(_key(user, "challenge"))
             frappe.throw(_("The number changed. Request a new verification code."))
         if not hmac.compare_digest(challenge["digest"], _digest(challenge["reference"], str(code).strip())):
             challenge["attempts"] += 1
+            if challenge.get("audit_group"):
+                verification(challenge["audit_group"], "Attempts Exhausted" if challenge["attempts"] >= challenge.get("max_attempts",5) else "Incorrect", hashed=True, incorrect=True)
             if challenge["attempts"] >= challenge.get("max_attempts", 5):
                 cache.delete_value(_key(user, "challenge"))
             else:
@@ -141,5 +151,7 @@ def verify_number(user, code):
         frappe.clear_document_cache("User", user)
         # Consume once. A database rollback requires a fresh verification code.
         cache.delete_value(_key(user, "challenge"))
+        if challenge.get("audit_group"):
+            group = challenge["audit_group"]
+            frappe.db.after_commit.add(lambda: verification(group, "Successful", hashed=True))
         return {"verified": True}
-

@@ -57,10 +57,9 @@ def resend_login_code(tmp_id):
         new_token = secrets.randbelow(2**63)
         while new_token == int(token):
             new_token = secrets.randbelow(2**63)
-        verification = _deliver(user, new_token, secret, settings, tmp_id)
+        verification = _deliver(user, new_token, secret, settings, tmp_id, action="Resend", expiry=expiry)
         cache.set(tmp_id + "_token", new_token)
         for suffix in ("_token", "_usr", "_pwd", "_otp_secret"):
             cache.expire(tmp_id + suffix, expiry)
         cache.set_value(key, state, expires_in_sec=expiry)
         return {"verification": verification, "tmp_id": tmp_id, "expires_in": expiry, "resend_after": value(settings, "resend_cooldown")}
-

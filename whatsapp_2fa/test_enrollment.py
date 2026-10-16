@@ -36,6 +36,8 @@ class TestEnrollment(unittest.TestCase):
             patch("whatsapp_2fa.providers.send", return_value={"outcome": "accepted"}),
             patch.object(enrollment.secrets, "randbelow", return_value=12345),
             patch.object(enrollment, "now_datetime", return_value="2026-10-12 12:00:00"),
+            patch("whatsapp_2fa.audit.now_datetime", return_value="2026-10-12 12:00:00"),
+            patch("whatsapp_2fa.audit._safe", return_value=None),
         ]
         for p in self.patches:
             p.start()

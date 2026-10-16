@@ -5,26 +5,40 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "provider_section",
   "enabled",
   "provider",
   "channel_account",
+  "provider_column",
   "template_name",
   "template_language",
+  "login_limits_section",
   "otp_expiry",
-  "resend_limits_section",
   "login_sends_per_hour",
-  "verification_sends_per_hour",
-  "resend_cooldown",
+  "login_column",
+  "login_max_lifetime",
+  "enrollment_limits_section",
   "verification_expiry",
+  "verification_sends_per_hour",
+  "enrollment_column",
   "verification_attempts",
-  "login_max_lifetime"
+  "resend_limits_section",
+  "resend_cooldown",
+  "audit_section",
+  "audit_retention_days"
  ],
  "fields": [
+  {
+   "fieldname": "provider_section",
+   "fieldtype": "Section Break",
+   "label": "Provider and Sending Account"
+  },
   {
    "default": "0",
    "fieldname": "enabled",
    "fieldtype": "Check",
-   "label": "Enabled"
+   "label": "Enable WhatsApp Provider",
+   "description": "Login verification also requires WhatsApp selected in System Settings and a verified, enabled User."
   },
   {
    "default": "Interakt (WA Chat Hub)",
@@ -32,52 +46,112 @@
    "fieldtype": "Select",
    "label": "Provider",
    "options": "Interakt (WA Chat Hub)",
-   "reqd": 1
+   "reqd": 1,
+   "description": "WhatsApp messages are delivered through the selected WA Chat Hub provider."
   },
   {
    "fieldname": "channel_account",
    "fieldtype": "Link",
-   "label": "Channel Account",
-   "options": "Chat Channel Account"
+   "label": "Sending Account",
+   "options": "Chat Channel Account",
+   "description": "Select an active Interakt account. Its API credentials are managed in Chat Channel Account.",
+   "mandatory_depends_on": "eval:doc.enabled"
+  },
+  {
+   "fieldname": "provider_column",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "template_name",
    "fieldtype": "Data",
-   "label": "Approved Authentication Template"
+   "label": "Authentication Template Name",
+   "description": "Exact provider template name, not its display label. Use an approved Authentication template with one code variable.",
+   "mandatory_depends_on": "eval:doc.enabled"
   },
   {
    "default": "en",
    "fieldname": "template_language",
    "fieldtype": "Data",
-   "label": "Template Language"
+   "label": "Template Language Code",
+   "description": "Use the language code approved for this template, for example en. It must match the provider template.",
+   "mandatory_depends_on": "eval:doc.enabled"
+  },
+  {
+   "fieldname": "login_limits_section",
+   "fieldtype": "Section Break",
+   "label": "Login Verification"
   },
   {
    "default": "300",
    "fieldname": "otp_expiry",
    "fieldtype": "Int",
-   "label": "OTP Expiry (seconds)",
-   "reqd": 1
-  },
-  {
-   "fieldname": "resend_limits_section",
-   "fieldtype": "Section Break",
-   "label": "Verification and Resend Limits"
+   "label": "Login Code Expiry (seconds)",
+   "reqd": 1,
+   "description": "60-600 seconds. Validity of each login code; resends are capped by the total login time limit.",
+   "non_negative": 1
   },
   {
    "fieldname": "login_sends_per_hour",
    "fieldtype": "Int",
-   "label": "Login Code Sends per Hour",
+   "label": "Login Sends per User per Hour",
    "default": "5",
    "reqd": 1,
-   "description": "Per user; includes the initial send and resends."
+   "description": "1-100 per user. Counts the initial login code and resends together; separate from enrollment sends. This is not the provider account-wide API limit.",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "login_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "login_max_lifetime",
+   "fieldtype": "Int",
+   "label": "Total Login Time Limit (seconds)",
+   "default": "900",
+   "reqd": 1,
+   "description": "60-3600 seconds. Total time allowed from the first login send, including resends. Must be at least Login Code Expiry.",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "enrollment_limits_section",
+   "fieldtype": "Section Break",
+   "label": "First-Time Number Verification"
+  },
+  {
+   "fieldname": "verification_expiry",
+   "fieldtype": "Int",
+   "label": "Enrollment Code Expiry (seconds)",
+   "default": "300",
+   "reqd": 1,
+   "description": "60-600 seconds. Time to verify ownership of the saved User number before enabling WhatsApp 2FA.",
+   "non_negative": 1
   },
   {
    "fieldname": "verification_sends_per_hour",
    "fieldtype": "Int",
-   "label": "Number Verification Sends per Hour",
+   "label": "Enrollment Sends per User per Hour",
    "default": "5",
    "reqd": 1,
-   "description": "Per user; includes the initial send and resends."
+   "description": "1-100 per user. Counts enrollment sends and resends; separate from login sends.",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "enrollment_column",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "verification_attempts",
+   "fieldtype": "Int",
+   "label": "Incorrect Enrollment Attempts per Code",
+   "default": "5",
+   "reqd": 1,
+   "description": "1-10 incorrect entries per enrollment code. After this limit, request a new code. Login attempts use Frappe login controls.",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "resend_limits_section",
+   "fieldtype": "Section Break",
+   "label": "Resend Controls"
   },
   {
    "fieldname": "resend_cooldown",
@@ -85,31 +159,22 @@
    "label": "Resend Cooldown (seconds)",
    "default": "60",
    "reqd": 1,
-   "description": null
+   "description": "10-3600 seconds, but shorter than both code expiry times. Shared setting for login and enrollment resend buttons.",
+   "non_negative": 1
   },
   {
-   "fieldname": "verification_expiry",
-   "fieldtype": "Int",
-   "label": "Number Verification Code Expiry (seconds)",
-   "default": "300",
-   "reqd": 1,
-   "description": null
+   "fieldname": "audit_section",
+   "fieldtype": "Section Break",
+   "label": "Audit and Retention"
   },
   {
-   "fieldname": "verification_attempts",
+   "fieldname": "audit_retention_days",
+   "label": "Keep Audit Logs For (days)",
    "fieldtype": "Int",
-   "label": "Number Verification Attempts per Code",
-   "default": "5",
+   "default": "30",
    "reqd": 1,
-   "description": null
-  },
-  {
-   "fieldname": "login_max_lifetime",
-   "fieldtype": "Int",
-   "label": "Maximum Login Challenge Lifetime (seconds)",
-   "default": "900",
-   "reqd": 1,
-   "description": null
+   "description": "1-365 days. Daily cleanup deletes older audit records. The scheduler and worker must be running.",
+   "non_negative": 1
   }
  ],
  "index_web_pages_for_search": 0,

@@ -1,0 +1,156 @@
+{
+ "doctype": "DocType",
+ "name": "WhatsApp 2FA Log",
+ "module": "WhatsApp Two Factor Authentication",
+ "autoname": "hash",
+ "engine": "InnoDB",
+ "track_changes": 0,
+ "field_order": [
+  "user",
+  "flow",
+  "action",
+  "correlation_reference",
+  "masked_destination",
+  "channel_account",
+  "provider_message_id",
+  "delivery_status",
+  "verification_result",
+  "incorrect_attempts",
+  "provider_error_code",
+  "failure_reason",
+  "sent_at",
+  "delivered_at",
+  "failed_at",
+  "verified_at",
+  "expires_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "user",
+   "label": "User",
+   "fieldtype": "Link",
+   "read_only": 1,
+   "options": "User",
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "flow",
+   "label": "Flow",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Login\nNumber Verification",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "action",
+   "label": "Action",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Initial Send\nResend",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "correlation_reference",
+   "label": "Correlation Reference",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "masked_destination",
+   "label": "Masked Destination",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "channel_account",
+   "label": "Channel Account",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "provider_message_id",
+   "label": "Provider Message ID",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "delivery_status",
+   "label": "Delivery Status",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Requested\nAccepted\nSent\nDelivered\nRead\nFailed\nUnknown",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "verification_result",
+   "label": "Verification Result",
+   "fieldtype": "Select",
+   "read_only": 1,
+   "options": "Pending\nSuccessful\nIncorrect\nExpired\nSuperseded\nAttempts Exhausted",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "incorrect_attempts",
+   "label": "Incorrect Attempts",
+   "fieldtype": "Int",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "provider_error_code",
+   "label": "Provider Error Code",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "failure_reason",
+   "label": "Failure Reason",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sent_at",
+   "label": "Sent At",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "delivered_at",
+   "label": "Delivered At",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "failed_at",
+   "label": "Failed At",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verified_at",
+   "label": "Verified At",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expires_at",
+   "label": "Expires At",
+   "fieldtype": "Datetime",
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "title_field": "user"
+}

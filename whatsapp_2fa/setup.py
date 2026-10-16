@@ -30,7 +30,9 @@ def sync_user_fields():
 
 
 def sync_configuration():
+    if frappe.get_meta("WhatsApp 2FA Settings").get_field("audit_retention_days"):
+        saved = frappe.db.get_singles_dict("WhatsApp 2FA Settings")
+        if saved.get("audit_retention_days") in (None, ""):
+            frappe.db.set_single_value("WhatsApp 2FA Settings", "audit_retention_days", 30)
     sync_system_settings()
     sync_user_fields()
-
-
